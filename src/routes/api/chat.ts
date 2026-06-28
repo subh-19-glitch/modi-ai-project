@@ -23,7 +23,7 @@ export const Route = createFileRoute("/api/chat")({
         try {
           const modelMessages = await convertToModelMessages(messages);
           const result = streamText({
-            model: google("gemini-2.0-flash"),
+            model: google("gemini-2.5-flash"),
             system:
               "You are a friendly, concise AI assistant. Answer general questions naturally and helpfully. Use markdown when it improves clarity (lists, code blocks, headings).",
             messages: modelMessages,
