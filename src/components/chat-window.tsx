@@ -70,13 +70,6 @@ export function ChatWindow({ threadId }: { threadId: string }) {
     composerRef.current?.focus();
   }, [threadId, status]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const text = input.trim();
-    if (!text || status === "streaming" || status === "submitted") return;
-    sendMessage({ text });
-    setInput("");
-  };
 
   const handleClear = () => {
     setMessages([]);
@@ -173,19 +166,21 @@ export function ChatWindow({ threadId }: { threadId: string }) {
       </Conversation>
 
       <div className="border-t border-border bg-chat-surface px-4 py-4">
-        <form onSubmit={handleSubmit} className="mx-auto w-full max-w-3xl">
-          <PromptInput onSubmit={() => { /* handled via form submit */ }}>
+        <div className="mx-auto w-full max-w-3xl">
+          <PromptInput
+            onSubmit={(_msg, e) => {
+              e.preventDefault();
+              const text = input.trim();
+              if (!text || isBusy) return;
+              sendMessage({ text });
+              setInput("");
+            }}
+          >
             <PromptInputTextarea
               ref={composerRef}
               value={input}
               onChange={(e) => setInput(e.currentTarget.value)}
               placeholder="Message modi…  (Enter to send, Shift+Enter for newline)"
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSubmit(e);
-                }
-              }}
             />
             <PromptInputFooter className="justify-end">
               <PromptInputSubmit
@@ -200,7 +195,7 @@ export function ChatWindow({ threadId }: { threadId: string }) {
               />
             </PromptInputFooter>
           </PromptInput>
-        </form>
+        </div>
       </div>
     </section>
   );

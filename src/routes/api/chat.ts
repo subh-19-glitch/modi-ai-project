@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { convertToModelMessages, streamText, type UIMessage } from "ai";
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
 
 /**
  * Streaming chat endpoint. The frontend's `useChat` hook posts to this URL.
@@ -10,19 +10,20 @@ export const Route = createFileRoute("/api/chat")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const apiKey = process.env.LOVABLE_API_KEY;
+        const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
         if (!apiKey) {
-          return new Response("Missing LOVABLE_API_KEY", { status: 500 });
+          return new Response("Missing GOOGLE_GENERATIVE_AI_API_KEY", { status: 500 });
         }
 
         const { messages } = (await request.json()) as { messages: UIMessage[] };
 
-        const gateway = createLovableAiGatewayProvider(apiKey);
+        // Initialize Google Provider
+        const google = createGoogleGenerativeAI({ apiKey });
 
         try {
           const modelMessages = await convertToModelMessages(messages);
           const result = streamText({
-            model: gateway("google/gemini-3-flash-preview"),
+            model: google("gemini-2.0-flash"),
             system:
               "You are a friendly, concise AI assistant. Answer general questions naturally and helpfully. Use markdown when it improves clarity (lists, code blocks, headings).",
             messages: modelMessages,
@@ -41,7 +42,7 @@ export const Route = createFileRoute("/api/chat")({
             status === 429
               ? "Rate limit reached. Please wait a moment and try again."
               : status === 402
-                ? "AI credits exhausted. Please add credits to continue."
+                ? "API quota exhausted. Please check your Google AI API key."
                 : "Something went wrong generating a response.";
           return new Response(body, { status });
         }
